@@ -15,29 +15,42 @@ spring:
               uri: lb://inventory-service
               predicates:
                 - Path=/api/**
+              filters:
+                - Role=ADMIN
               
             # BOOKING SERVICE
             - id: booking-service
               uri: lb://booking-service
               predicates:
                 - Path=/bookings/**
+              filters:
+                - Role=USER
               
             # GAME CATALOG SERVICE
             - id: game-catalog
               uri: lb://game-catalog
               predicates:
                 - Path=/games/**
+              filters:
+                - Role=USER
               
             # USER SERVICE
             - id: user-service
               uri: lb://user-service
               predicates:
                 - Path=/users/**
+              filters:
+                - Role=ADMIN
 
       # discovery:
       #   locator:
       #     enabled: true
       #     lower-case-service-id: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080
 
 eureka:
   client:
