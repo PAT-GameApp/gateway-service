@@ -33,6 +33,7 @@ public class RoleGatewayFilterFactory extends AbstractGatewayFilterFactory<RoleG
                     if (c.getAuthentication() instanceof JwtAuthenticationToken jwtToken) {
                         Jwt jwt = jwtToken.getToken();
                         String userRole = jwt.getClaimAsString("role");
+                        System.out.println(userRole);
                         if (userRole != null && userRole.equalsIgnoreCase(config.getRole())) {
                             return chain.filter(exchange);
                         }

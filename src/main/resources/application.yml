@@ -17,7 +17,7 @@ spring:
                 - Path=/api/**
               filters:
                 - Role=ADMIN
-              
+
             # BOOKING SERVICE
             - id: booking-service
               uri: lb://booking-service
@@ -25,7 +25,7 @@ spring:
                 - Path=/bookings/**
               filters:
                 - Role=USER
-              
+
             # GAME CATALOG SERVICE
             - id: game-catalog
               uri: lb://game-catalog
@@ -33,7 +33,7 @@ spring:
                 - Path=/games/**
               filters:
                 - Role=USER
-              
+
             # USER SERVICE
             - id: user-service
               uri: lb://user-service
@@ -42,15 +42,11 @@ spring:
               filters:
                 - Role=ADMIN
 
-      # discovery:
-      #   locator:
-      #     enabled: true
-      #     lower-case-service-id: true
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080
+          issuer-uri: http://127.0.0.1:8080
 
 eureka:
   client:
@@ -67,3 +63,9 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.cloud.gateway: DEBUG
