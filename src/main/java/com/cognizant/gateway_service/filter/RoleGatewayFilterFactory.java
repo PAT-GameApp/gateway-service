@@ -27,20 +27,39 @@ public class RoleGatewayFilterFactory extends AbstractGatewayFilterFactory<RoleG
 
     @Override
     public GatewayFilter apply(Config config) {
-        return (exchange, chain) -> ReactiveSecurityContextHolder.getContext()
-                .filter(c -> c.getAuthentication() != null)
-                .flatMap(c -> {
-                    if (c.getAuthentication() instanceof JwtAuthenticationToken jwtToken) {
-                        Jwt jwt = jwtToken.getToken();
-                        String userRole = jwt.getClaimAsString("role");
-                        System.out.println(userRole);
-                        if (userRole != null && userRole.equalsIgnoreCase(config.getRole())) {
-                            return chain.filter(exchange);
+        return (exchange, chain) -> {
+            String[] allowedRoles = config.getRole().split(",");
+
+            // Check if PUBLIC role is allowed (no authentication required)
+            boolean isPublic = Arrays.stream(allowedRoles)
+                    .map(String::trim)
+                    .anyMatch(role -> role.equalsIgnoreCase("PUBLIC"));
+
+            if (isPublic) {
+                return chain.filter(exchange);
+            }
+
+            // For non-public endpoints, check authentication
+            return ReactiveSecurityContextHolder.getContext()
+                    .filter(c -> c.getAuthentication() != null)
+                    .flatMap(c -> {
+                        if (c.getAuthentication() instanceof JwtAuthenticationToken jwtToken) {
+                            Jwt jwt = jwtToken.getToken();
+                            String userRole = jwt.getClaimAsString("role");
+
+                            boolean isAuthorized = Arrays.stream(allowedRoles)
+                                    .map(String::trim)
+                                    .anyMatch(role -> role.equalsIgnoreCase("ANY")
+                                            || (userRole != null && role.equalsIgnoreCase(userRole)));
+
+                            if (isAuthorized) {
+                                return chain.filter(exchange);
+                            }
                         }
-                    }
-                    return onError(exchange, HttpStatus.FORBIDDEN);
-                })
-                .switchIfEmpty(chain.filter(exchange)); // Or onError(exchange, HttpStatus.UNAUTHORIZED) if strict
+                        return onError(exchange, HttpStatus.FORBIDDEN);
+                    })
+                    .switchIfEmpty(onError(exchange, HttpStatus.UNAUTHORIZED));
+        };
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus) {

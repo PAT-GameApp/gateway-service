@@ -5,34 +5,54 @@ spring:
   application:
     name: gateway-service
 
+  # ANY -> any authenticated user
+  # PUBLIC -> no authentication required
+  # ADMIN -> admin role
+  # USER -> user role
   cloud:
     gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
       server:
         webflux:
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowedOriginPatterns: "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                allowCredentials: true
+          # server:
+          #   webflux:
           routes:
             # INVENTORY SERVICE
             - id: inventory-service
               uri: lb://inventory-service
               predicates:
-                - Path=/api/**
+                - Path=/equipment/**,/allotments/**
               filters:
-                - Role=ADMIN
+                - Role=PUBLIC
 
-            # BOOKING SERVICE
+            # BOOKING SERVICE - Supports multiple roles
             - id: booking-service
               uri: lb://booking-service
               predicates:
                 - Path=/bookings/**
               filters:
-                - Role=USER
+                - Role=PUBLIC # Multiple roles separated by comma
 
-            # GAME CATALOG SERVICE
+            # GAME CATALOG SERVICE - Public access (no authentication required)
             - id: game-catalog
               uri: lb://game-catalog
               predicates:
                 - Path=/games/**
               filters:
-                - Role=USER
+                - Role=PUBLIC # Allows access without authentication
 
             # USER SERVICE
             - id: user-service
@@ -40,13 +60,14 @@ spring:
               predicates:
                 - Path=/users/**
               filters:
-                - Role=ADMIN
+                - Role=PUBLIC
 
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://127.0.0.1:8080
+          # Use jwk-set-uri instead of issuer-uri to skip issuer claim validation
+          jwk-set-uri: http://localhost:8080/oauth2/jwks
 
 eureka:
   client:

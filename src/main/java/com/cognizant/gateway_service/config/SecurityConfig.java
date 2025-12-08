@@ -6,6 +6,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import reactor.core.publisher.Mono;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -17,9 +18,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/eureka/**", "/actuator/**", "/webjars/**", "/v3/api-docs/**").permitAll()
-                        .anyExchange().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+                        // Allow all requests through the security filter chain
+                        // The RoleGatewayFilter will handle authentication/authorization
+                        .anyExchange().permitAll())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(Customizer.withDefaults())
+                        // Don't fail on invalid tokens for PUBLIC endpoints
+                        // Let the RoleGatewayFilter decide what to do
+                        .authenticationEntryPoint((exchange, ex) -> {
+                            // Just continue - let the Role filter handle authorization
+                            return Mono.empty();
+                        }));
         return http.build();
     }
 }
