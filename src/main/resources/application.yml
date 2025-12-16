@@ -36,7 +36,7 @@ spring:
               predicates:
                 - Path=/equipment/**,/allotments/**
               filters:
-                - Role=PUBLIC
+                - Role=ANY
 
             # BOOKING SERVICE - Supports multiple roles
             - id: booking-service
@@ -50,7 +50,7 @@ spring:
             - id: game-catalog
               uri: lb://game-catalog
               predicates:
-                - Path=/games/**
+                - Path=/games/**,/locations/**
               filters:
                 - Role=PUBLIC # Allows access without authentication
 

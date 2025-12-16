@@ -29,6 +29,8 @@ public class RoleGatewayFilterFactory extends AbstractGatewayFilterFactory<RoleG
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             String[] allowedRoles = config.getRole().split(",");
+            System.out.println("RoleGatewayFilter: Processing request for " + exchange.getRequest().getURI());
+            System.out.println("Allowed roles: " + Arrays.toString(allowedRoles));
 
             // Check if PUBLIC role is allowed (no authentication required)
             boolean isPublic = Arrays.stream(allowedRoles)
