@@ -18,7 +18,9 @@ spring:
           globalcors:
             cors-configurations:
               "[/**]":
-                allowedOriginPatterns: "*"
+                allowedOrigins:
+                  - "http://localhost:5173"
+                  - "http://localhost:3000"
                 allowedMethods:
                   - GET
                   - POST
@@ -27,8 +29,8 @@ spring:
                   - OPTIONS
                 allowedHeaders: "*"
                 allowCredentials: true
-          # server:
-          #   webflux:
+                maxAge: 3600
+            add-to-simple-url-handler-mapping: true
           routes:
             # INVENTORY SERVICE
             - id: inventory-service
@@ -36,15 +38,26 @@ spring:
               predicates:
                 - Path=/equipment/**,/allotments/**
               filters:
-                - Role=ANY
+                - Role=PUBLIC
 
-            # BOOKING SERVICE - Supports multiple roles
-            - id: booking-service
+            # BOOKING SERVICE - CQRS Pattern
+            # Command operations (POST, PUT, DELETE) go to booking-service (command side)
+            - id: booking-service-command
               uri: lb://booking-service
               predicates:
                 - Path=/bookings/**
+                - Method=POST,PUT,DELETE,OPTIONS
               filters:
-                - Role=PUBLIC # Multiple roles separated by comma
+                - Role=PUBLIC
+
+            # Query operations (GET) go to booking-service-query (query side)
+            - id: booking-service-query
+              uri: lb://booking-service-query
+              predicates:
+                - Path=/bookings/**
+                - Method=GET
+              filters:
+                - Role=PUBLIC
 
             # GAME CATALOG SERVICE - Public access (no authentication required)
             - id: game-catalog
