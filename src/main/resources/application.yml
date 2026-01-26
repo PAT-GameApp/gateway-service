@@ -75,6 +75,14 @@ spring:
               filters:
                 - Role=PUBLIC
 
+            # CHAT SERVICE
+            - id: chat-service
+              uri: lb://chat-service
+              predicates:
+                - Path=/chat/**
+              filters:
+                - Role=PUBLIC
+
   security:
     oauth2:
       resourceserver:
